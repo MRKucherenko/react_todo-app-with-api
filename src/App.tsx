@@ -9,6 +9,7 @@ import { TodoList } from './components/TodoList/TodoList';
 import { Footer } from './components/Footer/Footer';
 import { TodoItem } from './components/TodoItem/TodoItem';
 import { ErrorMessage } from './components/ErrorMessage/ErrorMesage';
+import { FilterStatus } from './types/FilterStatus';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -18,7 +19,7 @@ export const App: React.FC = () => {
   const [isUpdateError, setIsUpdateError] = useState('');
   const [isDeleteError, setIsDeleteError] = useState('');
 
-  const [status, setStatus] = useState('all');
+  const [status, setStatus] = useState<FilterStatus>(FilterStatus.All);
   const [todo, setTodo] = useState<Todo>();
   const [todosIsLoading, setTodosIsLoading] = useState<number[]>([]);
   const [isInputDisabled, setInputDisabled] = useState(false);
@@ -30,33 +31,41 @@ export const App: React.FC = () => {
       .then(setTodos)
       .catch(() => {
         setIsLoadingError('Unable to load todos');
-      })
-      .finally(() => {});
+      });
   }, []);
 
   const filteredTodos = useMemo(() => {
-    let fltrdTodos: Todo[] | undefined = todos;
-
     switch (status) {
-      case 'all':
-        fltrdTodos = todos;
-        break;
-      case 'active':
-        fltrdTodos = todos?.filter(td => td.completed === false);
-        break;
-      case 'completed':
-        fltrdTodos = todos?.filter(td => td.completed === true);
-        break;
+      case FilterStatus.All:
+        return todos;
+      case FilterStatus.Active:
+        return todos.filter(td => !td.completed);
+      case FilterStatus.Completed:
+        return todos.filter(td => td.completed);
+      default:
+        return todos;
     }
-
-    return fltrdTodos;
   }, [status, todos]);
 
-  const handleClick = (event: React.MouseEvent) => {
-    setStatus(event.currentTarget.innerHTML.toLowerCase());
+  const handleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    const clicked = event.currentTarget.textContent?.toLowerCase();
+
+    switch (clicked) {
+      case 'all':
+        setStatus(FilterStatus.All);
+        break;
+      case 'active':
+        setStatus(FilterStatus.Active);
+        break;
+      case 'completed':
+        setStatus(FilterStatus.Completed);
+        break;
+      default:
+        setStatus(FilterStatus.All);
+    }
   };
 
-  function addTodo({ userId, title, completed }: Todo) {
+  const addTodo = ({ userId, title, completed }: Todo) => {
     setTodo({
       id: 0,
       userId: userId,
@@ -79,9 +88,9 @@ export const App: React.FC = () => {
         setInputDisabled(false);
         setTodo(undefined);
       });
-  }
+  };
 
-  function deleteTodo(todoId: number[], isInUpdate: boolean) {
+  const deleteTodo = (todoId: number[], isInUpdate: boolean) => {
     setIsFocus(false);
     setTodosIsLoading(todoId);
 
@@ -99,21 +108,19 @@ export const App: React.FC = () => {
 
           if (isInUpdate) {
             setIsFocus(false);
-          } else {
-            // setIsFocus(true);
           }
         } else {
           setIsFocus(true);
         }
 
-        setTodos(prevTodos => {
-          return prevTodos.filter(todo1 => !deletedIds.includes(todo1.id));
-        });
+        setTodos(prevTodos =>
+          prevTodos.filter(todo1 => !deletedIds.includes(todo1.id)),
+        );
       })
       .finally(() => {
         setTodosIsLoading([]);
       });
-  }
+  };
 
   async function updateStatusTodo(tod: Todo[]) {
     setIsFocus(false);
@@ -163,7 +170,7 @@ export const App: React.FC = () => {
           updateStatusTodo={updateStatusTodo}
         />
 
-        {todos && todos.length > 0 && (
+        {todos.length > 0 && (
           <TodoList
             todos={filteredTodos}
             removeTodo={deleteTodo}
@@ -171,16 +178,17 @@ export const App: React.FC = () => {
             updateStatusTodo={updateStatusTodo}
           />
         )}
+
         {todo && (
           <TodoItem
             todo={todo}
             removeTodo={deleteTodo}
             updateStatusTodo={updateStatusTodo}
-            isLoading={todo ? true : false}
+            isLoading={true}
           />
         )}
 
-        {todos && todos.length > 0 && (
+        {todos.length > 0 && (
           <Footer
             todos={todos}
             status={status}

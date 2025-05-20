@@ -1,3 +1,5 @@
+import classNames from 'classnames';
+
 type Props = {
   isAddError: string;
   isDeleteError: string;
@@ -28,21 +30,33 @@ export const ErrorMessage: React.FC<Props> = ({
     }, 3000);
   }
 
+  const cleanErrors = () => {
+    setIsAddError('');
+    setIsUpdateError('');
+    setIsDeleteError('');
+    setIsLoadingError('');
+  };
+
   return (
     <div
       data-cy="ErrorNotification"
-      className={`notification is-danger is-light has-text-weight-normal ${isAddError || isUpdateError || isDeleteError || isLoadingError ? '' : 'hidden'}`}
+      className={classNames(
+        'notification is-danger is-light has-text-weight-normal',
+        {
+          hidden: !(
+            isAddError ||
+            isUpdateError ||
+            isDeleteError ||
+            isLoadingError
+          ),
+        },
+      )}
     >
       <button
         data-cy="HideErrorButton"
         type="button"
         className="delete"
-        onClick={() => {
-          setIsAddError('');
-          setIsUpdateError('');
-          setIsDeleteError('');
-          setIsLoadingError('');
-        }}
+        onClick={cleanErrors}
       />
       {/* show only one message at a time */}
       {isAddError || isUpdateError || isDeleteError || isLoadingError}

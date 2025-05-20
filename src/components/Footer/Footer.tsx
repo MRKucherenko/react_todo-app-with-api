@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from 'react';
 import { Todo } from '../../types/Todo';
+import { FilterStatus } from '../../types/FilterStatus';
 
 type Props = {
   todos: Todo[];
@@ -14,49 +16,39 @@ export const Footer: React.FC<Props> = ({
   handleClick,
   deleteTodos,
 }) => {
+  const filterOptions = Object.values(FilterStatus);
+
   return (
     <footer className="todoapp__footer" data-cy="Footer">
       <span className="todo-count" data-cy="TodosCounter">
-        {todos?.filter(td => td.completed !== true).length} items left
+        {todos?.filter(td => !td.completed).length} items left
       </span>
 
-      {/* Active link should have the 'selected' class */}
       <nav className="filter" data-cy="Filter">
-        <a
-          href="#/"
-          className={`filter__link ${status === 'all' ? 'selected' : ''}`}
-          data-cy="FilterLinkAll"
-          onClick={event => {
-            handleClick(event);
-          }}
-        >
-          All
-        </a>
+        {filterOptions.map(filter => {
+          const hrefMap: Record<string, string> = {
+            all: '#/',
+            active: '#/active',
+            completed: '#/completed',
+          };
 
-        <a
-          href="#/active"
-          className={`filter__link ${status === 'active' ? 'selected' : ''}`}
-          data-cy="FilterLinkActive"
-          onClick={event => {
-            handleClick(event);
-          }}
-        >
-          Active
-        </a>
-
-        <a
-          href="#/completed"
-          className={`filter__link ${status === 'completed' ? 'selected' : ''}`}
-          data-cy="FilterLinkCompleted"
-          onClick={event => {
-            handleClick(event);
-          }}
-        >
-          Completed
-        </a>
+          return (
+            <a
+              key={filter}
+              href={hrefMap[filter]}
+              className={`filter__link ${status === filter ? 'selected' : ''}`}
+              data-cy={`FilterLink${filter.charAt(0).toUpperCase() + filter.slice(1)}`}
+              onClick={event => {
+                event.preventDefault();
+                handleClick(event);
+              }}
+            >
+              {filter.charAt(0).toUpperCase() + filter.slice(1)}
+            </a>
+          );
+        })}
       </nav>
 
-      {/* this button should be disabled if there are no completed todos */}
       <button
         type="button"
         className="todoapp__clear-completed"
@@ -67,11 +59,7 @@ export const Footer: React.FC<Props> = ({
             false,
           )
         }
-        disabled={
-          todos?.filter(todo => todo.completed === true).length === 0
-            ? true
-            : false
-        }
+        disabled={todos?.filter(todo => todo.completed === true).length === 0}
       >
         Clear completed
       </button>
